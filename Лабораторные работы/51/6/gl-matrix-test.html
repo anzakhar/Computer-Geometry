@@ -1,0 +1,57 @@
+﻿<!DOCTYPE HTML> 
+<html lang="en"> 
+<head>
+<title>Test of glMatrix JavaScript Library</title>
+<script type="module">
+	
+import {vec3, mat4} from './libs/dist/esm/index.js';
+
+function testglMatrixJsLibrary() {
+    const u = vec3.fromValues(1, 2, 3);
+    const v = vec3.fromValues(4, 5, 6);
+    let r = vec3.create();
+    const t = vec3.fromValues(1, 2, 3);
+  
+
+    vec3.add(r,u,v);            // r = [5,7,9]
+    alert(vec3.str(r));         // will alert [5,7,9]
+    alert(vec3.str(u));         // will alert [1,2,3]
+   
+    const d = vec3.dot(t,v);    // d = 1*4+2*5+3*6 = 32
+    alert(d);                   // will alert 32
+  
+    vec3.cross(r,t,v);          // r = [-3,6,-3]
+    alert(vec3.str(r));         // will alert [-3,6,-3]
+
+    const I = mat4.create();    // Creates a new identity mat4
+  
+    const M = mat4.fromValues(1,0,0,0,   // first column
+                              0,1,0,0,   // second column
+                              0,0,1,0,   // third column
+                              2,3,4,1);  // fourth column
+  
+    let IM = mat4.create();
+    mat4.multiply(IM,I,M);
+    alert(mat4.str(IM));        // will alert [1, 0, 0, 0
+                                //             0, 1, 0, 0,
+                                //             0, 0, 1, 0,
+                                //             2, 3, 4, 1]
+    let T = mat4.create();                  
+    mat4.translate(T, I, [2,3,4]);
+    alert(mat4.str(T));         // will alert [1,0,0,0
+                                //             0,1,0,0,
+                                //             0,0,1,0,
+                                //             2,3,4,1] 
+}
+
+window.onload = testglMatrixJsLibrary;
+</script>
+</head>
+<body">  
+  Simple web page to test glMatrix JavaScript library. </br>
+  The page shows a couple of alerts with the result 
+  from vector and matrix maths. </br>
+  You need to read the source code with view source or or similar
+  to understand the results of the alerts.
+</body>
+</html>
