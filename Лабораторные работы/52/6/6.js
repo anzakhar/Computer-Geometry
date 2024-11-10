@@ -24,7 +24,7 @@ function main() {
 
     const controls = {
         view: 'axonometry',
-        zoom: 'in',
+        zoom_effect: 'in',
         perspective_effect: 'more',
         visibleRed: true,
         visibleGreen: true,
@@ -61,13 +61,13 @@ function main() {
                 guiCamera.remove(perspective_effect);
                 controls.view = 'axonometry';
                 view = guiCamera.add(controls, 'view', ['left', 'right', 'top', 'bottom', 'front', 'back', 'isometry', 'axonometry']);
-                zoom = guiCamera.add(controls, 'zoom', ['in', 'out']);
+                zoom_effect = guiCamera.add(controls, 'zoom_effect', ['in', 'out']);
             } else {
                 camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 
                 this.type = "Perspective";
                 guiCamera.remove(view);
-                guiCamera.remove(zoom);
+                guiCamera.remove(zoom_effect);
                 controls.view = '3-point';
                 view = guiCamera.add(controls, 'view', ['1-point', '2-point', '3-point']);
                 perspective_effect = guiCamera.add(controls, 'perspective_effect', ['more', 'less']);
@@ -78,7 +78,7 @@ function main() {
     guiCamera.add(projection, 'switchCamera');
     guiCamera.add(projection, 'type').listen();
     let view = guiCamera.add(controls, 'view', ['left', 'right', 'top', 'bottom', 'front', 'back', 'isometry', 'axonometry']);
-    let zoom = guiCamera.add(controls, 'zoom', ['in', 'out']);
+    let zoom_effect = guiCamera.add(controls, 'zoom_effect', ['in', 'out']);
     let perspective_effect;
 
     // create a cube and add to scene
@@ -144,7 +144,7 @@ function main() {
                 camera.position.z = 15;
             break;
             case 'axonometry':
-                switch (controls.zoom) {
+                switch (controls.zoom_effect) {
                     case 'in':
                         // camera = new THREE.OrthographicCamera( window.innerWidth / -130, window.innerWidth / 130, window.innerHeight / 130,
                         //                                         window.innerHeight / - 130, -200, 500 );
