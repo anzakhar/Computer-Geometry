@@ -69,6 +69,8 @@ function init() {
       this.rotationY = 0;
       this.rotationZ = 0;
 
+      this.rotateOnAxis = 0;
+
       this.quaternion = 0;
 
       this.scale = 1;
@@ -145,6 +147,7 @@ function init() {
   guiRotation.add(controls, 'rotationX', -4, 4);
   guiRotation.add(controls, 'rotationY', -4, 4);
   guiRotation.add(controls, 'rotationZ', -4, 4);
+  guiRotation.add(controls, 'rotateOnAxis', -4, 4);
   guiRotation.add(controls, 'quaternion', -4, 4);
 
   let guiTranslate = gui.addFolder('translate');
@@ -155,6 +158,9 @@ function init() {
   guiTranslate.add(controls, 'translate');
 
   gui.add(controls, 'visible');
+
+  let axis = new THREE.Vector3( 5/2, 8/2, 3/2 );
+  axis.normalize();
 
   const orbitControls = initOrbitControls(camera, renderer);
   const clock = new THREE.Clock();
@@ -168,6 +174,7 @@ function init() {
       cube.rotation.x = controls.rotationX;
       cube.rotation.y = controls.rotationY;
       cube.rotation.z = controls.rotationZ;
+      cube.rotateOnAxis(axis, controls.rotateOnAxis);
 
       const quaternion = new THREE.Quaternion();
       quaternion.setFromAxisAngle( new THREE.Vector3( 0, 1, 0 ), controls.quaternion );
