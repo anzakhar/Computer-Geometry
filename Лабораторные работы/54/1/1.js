@@ -131,6 +131,22 @@ function main() {
     // ctx.fill();
 
     ////Атрибуты линии
+
+    // // Example: 10 pixels of line, 5 pixels of gap
+    // ctx.setLineDash([10, 5]); 
+
+    // // // Example: 5 pixels of line, 3 pixels of gap, 1 pixel of line, 3 pixels of gap (repeating pattern)
+    // // // ctx.setLineDash([5, 3, 1, 3]);
+
+    // // // ctx.lineDashOffset = 5; // Start the pattern 5 pixels into its sequence
+
+    // // // ctx.setLineDash([]); // To revert to drawing solid lines
+
+    // ctx.beginPath();
+    // ctx.moveTo(50, 50);
+    // ctx.lineTo(200, 50);
+    // ctx.stroke();
+
     //ctx.fillStyle = 'red';
     //ctx.font = 'bold 13pt Courier';
     //ctx.strokeStyle = 'blue';
@@ -182,3 +198,5 @@ function main() {
     //   window.alert("Stroke contains point");
     //}
 }
+
+window.onload = main;

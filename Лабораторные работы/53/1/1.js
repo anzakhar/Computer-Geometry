@@ -10,7 +10,7 @@ function main() {
     // Get the rendering context for 2DCG
     const ctx = canvas.getContext('2d');
 
-    //////Draw a green rectangle
+    ////Draw a green rectangle
     ctx.fillStyle = "Green"; // Set color to green
     //ctx.fillStyle = 'rgb(0, 255, 0)'; // Set color to green
     ////ctx.fillStyle = "#00ff00"; // Set color to green
@@ -59,14 +59,14 @@ function main() {
     //const w = ctx.measureText(s).width;
     //ctx.fillText(s, 100, 100, 2 * w / 3);
 
-    ////Рисуем красный треугольник без заливки.
-    //ctx.strokeStyle = "red";
-    //ctx.beginPath();
-    //ctx.moveTo(20, 20);
-    //ctx.lineTo(380, 20);
-    //ctx.lineTo(200, 280);
-    //ctx.closePath();
-    //ctx.stroke();
+    // //Рисуем красный треугольник без заливки.
+    // ctx.strokeStyle = "red";
+    // ctx.beginPath();
+    // ctx.moveTo(20, 20);
+    // ctx.lineTo(380, 20);
+    // ctx.lineTo(200, 280);
+    // ctx.closePath();
+    // ctx.stroke();
 
     ////Здесь мы рисуем круг с зеленым контуром.
     //ctx.strokeStyle = "green";
@@ -131,6 +131,22 @@ function main() {
     // ctx.fill();
 
     ////Атрибуты линии
+
+    // // Example: 10 pixels of line, 5 pixels of gap
+    // ctx.setLineDash([10, 5]); 
+
+    // // Example: 5 pixels of line, 3 pixels of gap, 1 pixel of line, 3 pixels of gap (repeating pattern)
+    // // ctx.setLineDash([5, 3, 1, 3]);
+
+    // // ctx.lineDashOffset = 5; // Start the pattern 5 pixels into its sequence
+
+    // // ctx.setLineDash([]); // To revert to drawing solid lines
+
+    // ctx.beginPath();
+    // ctx.moveTo(50, 50);
+    // ctx.lineTo(200, 50);
+    // ctx.stroke();
+
     //ctx.fillStyle = 'red';
     //ctx.font = 'bold 13pt Courier';
     // ctx.strokeStyle = 'blue';
@@ -182,3 +198,5 @@ function main() {
     //   window.alert("Stroke contains point");
     //}
 }
+
+window.onload = main;
