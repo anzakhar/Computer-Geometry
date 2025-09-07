@@ -1,6 +1,6 @@
 #version 300 es
 
-// in vec4 a_Position; // attribute variable
+// layout(location=1) in vec4 a_Position; // attribute variable
 void main() {
   gl_Position = vec4(0.0, 0.0, 0.0, 1.0); // Set the vertex coordinates of the point
   // gl_Position = a_Position;
