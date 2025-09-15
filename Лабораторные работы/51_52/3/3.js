@@ -27,13 +27,6 @@ async function main() {
     return;
   }
 
-  // Get the storage location of a_Position
-  const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-  if (a_Position < 0) {
-    console.log('Failed to get the storage location of a_Position');
-    return;
-  }
-
   //// Get the storage location of u_FragColor
   //const u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
   //if (!u_FragColor) {
@@ -42,7 +35,7 @@ async function main() {
   //}
 
   // Register function (event handler) to be called on a mouse press
-  canvas.onmousedown = function (ev) { click(ev, gl, canvas, a_Position/*, u_FragColor*/); };
+  canvas.onmousedown = function (ev) { click(ev, gl, canvas, /*, u_FragColor*/); };
 
   // Specify the color for clearing <canvas>
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -52,7 +45,7 @@ async function main() {
 }
 
 const g_points = []; // The array for the position of a mouse press
-function click(ev, gl, canvas, a_Position/*, u_FragColor*/) {
+function click(ev, gl, canvas/*, u_FragColor*/) {
   let x = ev.clientX; // x coordinate of a mouse pointer
   let y = ev.clientY; // y coordinate of a mouse pointer
   const rect = ev.target.getBoundingClientRect();
@@ -68,7 +61,7 @@ function click(ev, gl, canvas, a_Position/*, u_FragColor*/) {
   const len = g_points.length;
   for (let i = 0; i < len; i += 2) {
     // Pass the position of a point to a_Position variable
-      gl.vertexAttrib3f(a_Position, g_points[i], g_points[i + 1], 0.0);
+      gl.vertexAttrib3f(1, g_points[i], g_points[i + 1], 0.0);
 	  
 	  // gl.uniform4f(u_FragColor, 1.0, 0.0, 0.0, 1.0);
 
