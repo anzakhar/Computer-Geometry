@@ -1,100 +1,124 @@
-// 03.js
+// 3.js
 
-"use strict";
+// Imports.
+import {getShader} from './libs/prepShader.js';
 
-const circle = function (ctx, x, у, radius, fillCircle) {
- ctx.beginPath();
- ctx.arc (x, у, radius, 0, Math.PI * 2, false);
- if (fillCircle)
-   ctx.fill();
- else
-   ctx.stroke();
-};
+async function main() {
 
-class Ball {
-  constructor(ctx, width, height) {
-    this.x = width / 2;
-    this.y = height / 2;
-    this.xSpeed = 5;
-    this.ySpeed = 0;
-    this.ctx = ctx;
-    this.width = width;
-    this.height = height;
-  }
-  draw() {
-    circle(this.ctx, this.x, this.y, 10, true);
-  }
-  move() {
-    this.x += this.xSpeed;
-    this.y += this.ySpeed;
+  // Read shaders.
+  const shaderCode = await getShader("shaders.wgsl");
 
-    if (this.x < 0) {
-      this.x = this.width;
-    } else if (this.x > this.width) {
-      this.x = 0;
-    } 
-    if (this.y < 0) {
-      this.y = this.height;
-    } else if (this.y > this.height) {
-      this.y = 0;
-    }
-  }
-  setDirection(direction) {
-    if (direction === "up" ) {
-      this.xSpeed = 0;
-      this.ySpeed = -5 ;
-    } else if (direction === "down") { 
-      this.xSpeed = 0;
-      this.ySpeed = 5;
-    } else if (direction === "left") { 
-      this.xSpeed = -5;
-      this.ySpeed = 0;
-    } else if (direction === "right") { 
-      this.xSpeed = 5;
-      this.ySpeed = 0;
-    } else if (direction === "stop") { 
-      this.xSpeed = 0;
-      this.ySpeed = 0;
-    }
-  }
-}
+  if (!navigator.gpu)
+    throw new Error("WebGPU not supported");
 
-function main() {
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) 
+    throw new Error("No GPUAdapter found");
+
+  // Access the GPU
+  const device = await adapter.requestDevice();
+  if (!device)
+    throw new Error("Failed to create a GPUDevice");
+
+  const encoder = device.createCommandEncoder();
+  if (!encoder)
+    throw new Error("Failed to create a GPUCommandEncoder");
+
   // Retrieve <canvas> element
-    const canvas = document.getElementById('mycanvas');
-    const ctx = canvas.getContext("2d") ;
+  const canvas = document.getElementById('mycanvas');
+  if (!canvas)
+    throw new Error("Could not access canvas in page");
 
-    const width = canvas.width;
-    const height = canvas.height ;
+  // Obtain a WebGPU context for the canvas
+  const context = canvas.getContext("webgpu");
+  if (!context)
+    throw new Error("Could not obtain WebGPU context for canvas");
 
-    const ball = new Ball(ctx, width, height);
+  // Get the best pixel format
+  const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
 
-    const keyActions = {
-      " ": "stop",           // пробел
-      "ArrowLeft":  "left",  // влево
-      "Left"     :  "left",  // IE/Edge specific value
-      "ArrowUp":    "up",    // вверх
-      "Up":         "up",    // IE/Edge specific value
-      "ArrowRight": "right", // вправо
-      "Right":      "right", // IE/Edge specific value
-      "ArrowDown":  "down",  // вниз
-      "Down":       "down",  // IE/Edge specific value
-    };
+  // Configure the context with the device and format
+  context.configure({
+    device: device,
+    format: canvasFormat,
+    alphaMode: "opaque"
+  });
 
-    function divertDirection(event) {
-      const direction = keyActions[event.key];
-      ball.setDirection(direction);
-    }
+  // Create the render pass encoder
+  const renderPass = encoder.beginRenderPass({
+    colorAttachments: [{
+        view: context.getCurrentTexture().createView(),
+        loadOp: "clear",
+        clearValue: { r: 0.9, g: 0.9, b: 0.9, a: 1.0 },
+        storeOp: "store"
+    }]
+  });
 
-    //Обработчик события keydown, будет вызван при каждом нажатии клавиши
-    window.addEventListener("keydown", divertDirection, false);
+  // Define vertex data (coordinates and colors)
+  const vertexData = new Float32Array([
+      0.0, 0.5, 0.0, 1.0, 0.0,    // First vertex
+      -0.5, -0.5, 1.0, 0.0, 0.0,  // Second vertex
+      0.5, -0.5, 0.0, 0.0, 1.0    // Third vertex
+  ]);
 
-    function animate( ) {
-      ctx.clearRect(0, 0, 400, 400);
-      ball.draw();
-      ball.move();
-	  requestAnimationFrame(animate);
-	}
-	
-	animate();
+  // Create vertex buffer
+  const vertexBuffer = device.createBuffer({
+      label: "Example vertex buffer",
+      size: vertexData.byteLength,
+      usage: 
+          GPUBufferUsage.VERTEX | 
+          GPUBufferUsage.COPY_DST
+  });
+
+  // Write data to buffer
+  device.queue.writeBuffer(vertexBuffer, 0, vertexData);
+
+  // Define layout of buffer data
+  const bufferLayout = {
+      arrayStride: 20,
+      attributes: [
+          { format: "float32x2", offset: 0, shaderLocation: 0 }, 
+          { format: "float32x3", offset: 8, shaderLocation: 1 }
+      ],
+  };
+
+  // Create the shader module
+  const shaderModule = device.createShaderModule({
+      label: "Example shader module",
+      code: shaderCode
+  });
+
+  // Define the rendering procedure
+  const renderPipeline = device.createRenderPipeline({
+      layout: "auto",
+      vertex: {
+          module: shaderModule,
+          entryPoint: "vertexMain",
+          buffers: [bufferLayout]
+      },
+      fragment: {
+          module: shaderModule,
+          entryPoint: "fragmentMain",
+          targets: [{
+              format: canvasFormat
+          }]
+      },
+      primitive: {
+        topology: "triangle-list"
+      }    
+  });
+
+  renderPass.setVertexBuffer(0, vertexBuffer);
+  renderPass.setPipeline(renderPipeline);
+
+  // Draw vertices and complete rendering
+  renderPass.draw(3);
+
+  // Complete the render pass encoding
+  renderPass.end();
+
+  // Submit the render commands to the GPU
+  device.queue.submit([encoder.finish()]);
 }
+
+window.onload = main;

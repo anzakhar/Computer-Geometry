@@ -1,98 +1,122 @@
 // 02.js
 
-"use strict";
+// // Imports.
+// import {getShader} from './libs/prepShader.js';
 
-//// function circle(ctx, x, у, radius, fillCircle) {
-////  ctx.beginPath();
-////  ctx.arc (x, у, radius, 0, Math.PI * 2, false);
-////  if (fillCircle)
-////    ctx.fill();
-////  else
-////    ctx.stroke();
-//// };
+async function main() {
 
-//// function drawBee(ctx, x, у) {
-////   ctx.lineWidth = 2;
-////   ctx.strokeStyle = "Black";
-////   ctx.fillStyle = "Gold";
-////   circle (ctx, x, у, 8, true);
-////   circle (ctx, x, у, 8, false);
-////   circle (ctx, x - 5, у - 11, 5, false);
-////   circle (ctx, x + 5, у - 11, 5, false);
-////   circle (ctx, x - 2, у - 1, 2, false);
-////   circle (ctx, x + 2, у - 1, 2, false);
-//// };
+  // // Read shaders.
+  // const shaderCode = await getShader("shaders.wgsl");
 
-//// function update( coordinate ) {
-////   const offset = Math.random( ) * 4 - 2;
-////   coordinate += offset;
+  if (!navigator.gpu)
+    throw new Error("WebGPU not supported");
 
-////    if (coordinate > 400)
-////      coordinate = 400;
-////    if (coordinate < 0) 
-////      coordinate = 0;
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) 
+    throw new Error("No GPUAdapter found");
 
-////    return coordinate;
-////  };
+  // Access the GPU
+  const device = await adapter.requestDevice();
+  if (!device)
+    throw new Error("Failed to create a GPUDevice");
 
-////// class Ball {
-//////   constructor(ctx) {
-//////     this.x = 200;
-//////     this.y = 200;
-//////     this.xSpeed = -2;
-//////     this.ySpeed = 3;
-//////     this.ctx = ctx;
-//////   }
-//////   draw() {
-//////     circle(this.ctx, this.x, this.y, 6, true);
-//////   }
-//////   move() {
-//////     this.x += this.xSpeed;
-//////     this.y += this.ySpeed;
-//////   }
-//////   checkCollision() {
-//////     if (this.x < 0 || this.x > 400) {
-//////       this.xSpeed = -this.xSpeed;
-//////     } 
-//////     if (this.y < 0 || this.y > 400)
-//////       this.ySpeed = -this.ySpeed;
-//////     } 
-////// }
+  const encoder = device.createCommandEncoder();
+  if (!encoder)
+    throw new Error("Failed to create a GPUCommandEncoder");
 
-function main() {
   // Retrieve <canvas> element
-    const canvas = document.getElementById('mycanvas');
-    const ctx = canvas.getContext("2d") ;
+  const canvas = document.getElementById('mycanvas');
+  if (!canvas)
+    throw new Error("Could not access canvas in page");
 
-    let position = 0;
-    // let size = 0;
-    //// let x = 200;
-    //// let y = 200;
-    //////const ball = new Ball(ctx);
+  // Obtain a WebGPU context for the canvas
+  const context = canvas.getContext("webgpu");
+  if (!context)
+    throw new Error("Could not obtain WebGPU context for canvas");
 
-    function animate() {
-      ctx.clearRect(0, 0, 400, 400);
-      ctx.fillRect(position, 0, 20, 20);
-      // ctx.fillRect(0, 0, size, size) ;
+  // Get the best pixel format
+  const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
 
-      position++;
-      if (position > 400)
-         position = 0;
+  // Configure the context with the device and format
+  context.configure({
+    device: device,
+    format: canvasFormat,
+  });
 
-      // size++;
-      // if ( size > 400)
-      //   size=0;
+  // Create the render pass encoder
+  const renderPass = encoder.beginRenderPass({
+    colorAttachments: [{
+        view: context.getCurrentTexture().createView(),
+        loadOp: "clear",
+        clearValue: { r: 0.2, g: 0.2, b: 1.0, a: 1.0 },
+        storeOp: "store"
+    }]
+  });
 
-      //// drawBee(ctx, x, y) ;
-      //// x = update(x);
-      //// y = update(y);
+  // // Define vertex data (coordinates)
+  // const vertexData = new Float32Array([
+  //   0.0, 0.5,    // First vertex
+  //   -0.5, -0.5,  // Second vertex
+  //   0.5, -0.5    // Third vertex
+  // ]);
 
-      ////// ball.draw();
-      ////// ball.move();
-      ////// ball.checkCollision();
+  // // Create vertex buffer
+  // const vertexBuffer = device.createBuffer({
+  //     label: "Example vertex buffer",
+  //     size: vertexData.byteLength,
+  //     usage: 
+  //         GPUBufferUsage.VERTEX | 
+  //         GPUBufferUsage.COPY_DST
+  // });
 
-      requestAnimationFrame(animate);
-  }
+  // // Write data to buffer
+  // device.queue.writeBuffer(vertexBuffer, 0, vertexData);
 
-  animate();
+  // // Define layout of buffer data
+  // const bufferLayout = {
+  //     arrayStride: 8,
+  //     attributes: [
+  //         { format: "float32x2", offset: 0, shaderLocation: 0 } 
+  //     ],
+  // };
+
+  // // Create the shader module
+  // const shaderModule = device.createShaderModule({
+  //     label: "Example shader module",
+  //     code: shaderCode
+  // });
+
+  // // Define the rendering procedure
+  // const renderPipeline = device.createRenderPipeline({
+  //     layout: "auto",
+  //     vertex: {
+  //         module: shaderModule,
+  //         entryPoint: "vertexMain",
+  //         buffers: [bufferLayout]
+  //     },
+  //     fragment: {
+  //         module: shaderModule,
+  //         entryPoint: "fragmentMain",
+  //         targets: [{
+  //             format: canvasFormat
+  //         }]
+  //     },
+  //     primitive: {
+  //       topology: "triangle-list"
+  //     }    
+  // });
+
+  // renderPass.setVertexBuffer(0, vertexBuffer);
+  // renderPass.setPipeline(renderPipeline);
+
+  // // Draw vertices and complete rendering
+  // renderPass.draw(3);
+
+  // Complete the render pass encoding
+  renderPass.end();
+
+  // Submit the render commands to the GPU
+  device.queue.submit([encoder.finish()]);
 }
+
+window.onload = main;
