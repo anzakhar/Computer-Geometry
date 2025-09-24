@@ -19,8 +19,8 @@ async function main() {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
   // // Read shaders and create shader program executable.
-  // const vertexShader = await getShader(gl, "vertex", "Shaders/vertexShader.glsl");
-  // const fragmentShader = await getShader(gl, "fragment", "Shaders/fragmentShader.glsl");
+  // const vertexShader = await getShader("Shaders/vertexShader.glsl");
+  // const fragmentShader = await getShader("Shaders/fragmentShader.glsl");
 
   //  // Initialize shaders
   // if (!initShaders(gl, vertexShader, fragmentShader)) {

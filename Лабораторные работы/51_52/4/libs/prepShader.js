@@ -1,4 +1,4 @@
-export async function getShader(webGLcontext, shaderType, shaderFile) 
+export async function getShader(shaderFile) 
 {
   // Read the source shader file.
   const shaderResponse = await fetch(shaderFile);

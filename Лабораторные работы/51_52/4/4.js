@@ -20,8 +20,8 @@ async function main() {
   }
 
   // Read shaders and create shader program executable.
-  const vertexShader = await getShader(gl, "vertex", "Shaders/vertexShader.glsl");
-  const fragmentShader = await getShader(gl, "fragment", "Shaders/fragmentShader.glsl");
+  const vertexShader = await getShader("Shaders/vertexShader.glsl");
+  const fragmentShader = await getShader("Shaders/fragmentShader.glsl");
 
    // Initialize shaders
   if (!initShaders(gl, vertexShader, fragmentShader)) {
@@ -84,17 +84,11 @@ function initVertexBuffers(gl) {
   // Write date into the buffer object
   gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-  // Provide instructions for VAO to use data later in draw
-  const a_Position = gl.getAttribLocation(gl.program, 'a_Position');
-  if (a_Position < 0) {
-    console.log('Failed to get the storage location of a_Position');
-    return -1;
-  }
   // Assign the buffer object to a_Position variable
-  gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
+  gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
 
   // Enable the assignment to a_Position variable
-  gl.enableVertexAttribArray(a_Position);
+  gl.enableVertexAttribArray(1);
 
   // Clean
   gl.bindVertexArray(null);
