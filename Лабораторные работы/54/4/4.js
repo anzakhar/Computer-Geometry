@@ -2,7 +2,7 @@
 
 // Imports.
 import {getShader} from './libs/prepShader.js';
-// import { mat4 } from 'https://wgpu-matrix.org/dist/2.x/wgpu-matrix.module.js'; 
+import { mat4 } from 'https://wgpu-matrix.org/dist/2.x/wgpu-matrix.module.js'; 
 
 async function main() {
 
@@ -42,17 +42,17 @@ async function main() {
   });
 
   // Define vertex data
-  const vertexData = new Float32Array([
-      -0.5, -0.5,  // First vertex
-      0.5, -0.5,    // Second vertex
-      -0.5, 0.5,  // Third vertex
-      0.5, 0.5,    // Fourth vertex
+  let vertexData = new Float32Array([
+      -0.5, -0.5, 0.2, 0.2, 1.0,  // First vertex
+      0.5, -0.5, 0.2, 0.2, 1.0,   // Second vertex
+      -0.5, 0.5, 0.2, 0.2, 1.0,   // Third vertex
+      0.5, 0.5, 0.2, 0.2, 1.0,    // Fourth vertex
   ]);
 
   // Create vertex buffer
   const vertexBuffer = device.createBuffer({
       label: "Vertex Buffer 0",
-      size: vertexData.byteLength,
+      size: 2*vertexData.byteLength,
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
   });
 
@@ -61,9 +61,10 @@ async function main() {
 
   // Define layout of vertex buffer
   const bufferLayout = {
-      arrayStride: 8,
+      arrayStride: 20,
       attributes: [
-        { format: "float32x2", offset: 0, shaderLocation: 0 }
+          { format: "float32x2", offset: 0, shaderLocation: 0 }, 
+          { format: "float32x3", offset: 8, shaderLocation: 1 }
       ],
   };
 
@@ -75,13 +76,18 @@ async function main() {
     0.0, 0.0, 0.0, 1.0,      // Fourth column of matrix
   ]);
 
+  let color = new Float32Array([
+    0.2, 0.2, 1.0, 1.0
+  ]);
+
   // Create uniform buffer
-  const uniformBuffer = device.createBuffer({
+  let uniformBuffer = device.createBuffer({
       label: "Uniform Buffer 0",
-      size: uniformData.byteLength,
+      size: uniformData.byteLength+color.byteLength,
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
   });
   device.queue.writeBuffer(uniformBuffer, 0, uniformData); 
+  device.queue.writeBuffer(uniformBuffer, uniformData.byteLength, color); 
 
   // Create the shader module
   const shaderModule = device.createShaderModule({
@@ -146,29 +152,43 @@ async function main() {
   renderPass.draw(4);
 
 
-  // uniformData = mat4.identity();
+  uniformData = mat4.identity();
+  color = new Float32Array([
+    1.0, 0.2, 1.0, 1.0
+  ]);
 
-  // // Create uniform buffer
-  // const uniformBuffer2 = device.createBuffer({
-  //     label: "Uniform Buffer 0",
-  //     size: uniformData.byteLength,
-  //     usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
-  // });
+  vertexData = new Float32Array([
+      -0.5, -0.5, 1.0, 0.2, 1.0,  // First vertex
+      0.5, -0.5, 1.0, 0.2, 1.0,   // Second vertex
+      -0.5, 0.5, 1.0, 0.2, 1.0,   // Third vertex
+      0.5, 0.5, 1.0, 0.2, 1.0,    // Fourth vertex
+  ]);
+
+  // Write data to buffer
+  device.queue.writeBuffer(vertexBuffer, vertexData.byteLength, vertexData);
+
+  // Create uniform buffer
+  const uniformBuffer2 = device.createBuffer({
+      label: "Uniform Buffer 2",
+      size: uniformData.byteLength+color.byteLength,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+  });
   
-  // device.queue.writeBuffer(uniformBuffer2, 0, uniformData);
+  device.queue.writeBuffer(uniformBuffer2, 0, uniformData);
+  device.queue.writeBuffer(uniformBuffer2, uniformData.byteLength, color); 
 
-  // bindGroup = device.createBindGroup({
-  //     layout: bindGroupLayout,
-  //     entries: [{
-  //         binding: 0,
-  //         resource: { buffer: uniformBuffer2 }
-  //     }]
-  // });
+  bindGroup = device.createBindGroup({
+      layout: bindGroupLayout,
+      entries: [{
+          binding: 0,
+          resource: { buffer: uniformBuffer2 }
+      }]
+  });
 
-  // // Associate bind group with render pass encoder
-  // renderPass.setBindGroup(0, bindGroup);
+  // Associate bind group with render pass encoder
+  renderPass.setBindGroup(0, bindGroup);
   
-  // renderPass.draw(4);
+  renderPass.draw(4, 1, 4);
 
 
   // Complete the render pass encoding
