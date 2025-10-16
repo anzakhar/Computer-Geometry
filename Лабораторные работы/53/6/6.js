@@ -1,8 +1,8 @@
 "use strict";
 
 // Imports.
-import * as THREE from './libs/three.module.js'
-import * as  dat from './libs/dat.gui.module.js';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js'
+import * as  dat from 'https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js';
 
 function main() {
 
