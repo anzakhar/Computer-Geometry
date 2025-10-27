@@ -1,316 +1,339 @@
-"use strict";
+// 05.js
 
 // Imports.
-import * as THREE from './libs/three.module.js'
-import * as  dat from './libs/dat.gui.module.js';
+import {getShader} from './libs/prepShader.js';
+import * as  dat from 'https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js';
+import { vec3, mat4 } from 'https://wgpu-matrix.org/dist/2.x/wgpu-matrix.module.js';
 
-function main() {
+async function main() {
+  // Read shaders.
+  const shaderCode = await getShader("shaders.wgsl");
 
-    // create a scene, that will hold all our elements such as objects, cameras and lights.
-    const scene = new THREE.Scene();
+  if (!navigator.gpu)
+    throw new Error("WebGPU not supported");
 
-    // create a render, sets the background color and the size
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setClearColor(0x000000, 1.0);
-    renderer.setSize(window.innerWidth, window.innerHeight);
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) 
+    throw new Error("No GPUAdapter found");
 
-    // show axes in the screen
-    const axes = new THREE.AxesHelper(50);
-    scene.add(axes);
-	
-	// create a camera, which defines where we're looking at.
-    let camera = new THREE.OrthographicCamera( -window.innerWidth / 20, window.innerWidth / 20, window.innerHeight / 20,
-        -window.innerHeight / 20, -20, 20 );
+  // Access the GPU
+  const device = await adapter.requestDevice();
+  if (!device)
+    throw new Error("Failed to create a GPUDevice");
 
-    const gui = new dat.GUI();
-	
-	const lineGeometry = new THREE.BufferGeometry();
-	const points = [];
-	const colors = [];
-	const radius = 20, twopi = 2 * Math.PI, N_SEGMENTS = 100;
-	for (let i = 0; i <= N_SEGMENTS; i++)
-	{
-		const x = radius * Math.cos( i / N_SEGMENTS * twopi );
-		const y = radius * Math.sin( i / N_SEGMENTS * twopi );
-		points.push(x, y, 0);
-		
-		colors.push(i / (N_SEGMENTS - 1), 0, (N_SEGMENTS - 1 - i) / (N_SEGMENTS - 1));
-	}
+  // Retrieve <canvas> element
+  const canvas = document.getElementById('mycanvas');
+  if (!canvas)
+    throw new Error("Could not access canvas in page");
 
-	const vertices = new Float32Array( points );
-	lineGeometry.setAttribute( 'position', new THREE.BufferAttribute( vertices, 3 ) );
-	
-	const verticesColors = new Float32Array( colors );
-	lineGeometry.setAttribute('color', new THREE.BufferAttribute(verticesColors, 3));
-	
-	const controls = {
-		basicColor: "#ffffff"
-	};
-	const guiColor = gui.addColor(controls, 'basicColor');
-	
-	const controlsLine = {
-		vertexColors: false,
-        visible: true
-	};
-	
-	const materialLine = new THREE.LineBasicMaterial({ color: controls.basicColor, vertexColors: controlsLine.vertexColors } );
-	
-	// Create the line
-	const meshLine = new THREE.Line( lineGeometry, materialLine );
-	meshLine.computeLineDistances();
-    scene.add(meshLine);
+  // Obtain a WebGPU context for the canvas
+  const context = canvas.getContext("webgpu");
+  if (!context)
+    throw new Error("Could not obtain WebGPU context for canvas");
 
-	const guiLineParameters = gui.addFolder('line parameters');
-	
-    guiLineParameters.add(controlsLine, 'visible').onChange(function (e) {
-		meshLine.material.visible = e;
-	});
-	guiLineParameters.add(controlsLine, 'vertexColors').onChange(function (e) {
-		meshLine.material.vertexColors = e;
-		meshLine.material.needsUpdate = true;
-	});
-	
-	const controlsDash = {
-		dashSize: 10,
-		gapSize: 10,
-		scale: 1
-	};
-	
-	let guiDashParameters;
-		
-    const lineParameters = {
-        type: "Basic",
-        switchMaterial: function () {
-            if (meshLine.material instanceof THREE.LineDashedMaterial) {
-                meshLine.material = new THREE.LineBasicMaterial({ color: controls.basicColor, vertexColors: controlsLine.vertexColors } );
-                
-                this.type = "Basic";
-				if (guiDashParameters != undefined)
-					guiLineParameters.removeFolder(guiDashParameters);
-            } else {
-                meshLine.material = new THREE.LineDashedMaterial({ vertexColors: controlsLine.vertexColors,
-								color: controls.basicColor, dashSize: controlsDash.dashSize, gapSize: controlsDash.gapSize, scale: controlsDash.scale });
+  // Get the best pixel format
+  const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
 
-                this.type = "Dashed";
-				
-				guiDashParameters = guiLineParameters.addFolder('dash parameters');
-	
-				guiDashParameters.add(controlsDash, 'dashSize', 1, 20).onChange(function (e) {
-					meshLine.material.dashSize = e;
-				});
-				guiDashParameters.add(controlsDash, 'gapSize', 1, 20).onChange(function (e) {
-					meshLine.material.gapSize = e;
-				});
-				guiDashParameters.add(controlsDash, 'scale', 0.1, 10).onChange(function (e) {
-					meshLine.material.scale = e;
-				});
+  // Configure the context with the device and format
+  context.configure({
+    device: device,
+    format: canvasFormat,
+    alphaMode: "opaque"
+  });
+
+  const controls = {
+    view: 'axonometry',
+    perspective_method: 'perspective',
+    zoom_effect: 'in',
+    perspective_effect: 'more',
+    render: 'wireframe',
+    instances: 1
+  };
+
+  // Define vertex data (coordinates and colors)
+  
+
+  // Create vertex buffer
+  // const vertexBuffer = device.createBuffer({
+  //     label: "Example vertex buffer",
+  //     size: vertexData.byteLength,
+  //     usage: 
+  //         GPUBufferUsage.VERTEX | 
+  //         GPUBufferUsage.COPY_DST
+  // });
+
+  // Write data to buffer
+  //device.queue.writeBuffer(vertexBuffer, 0, vertexData);
+
+  // Define layout of buffer data
+  const bufferLayout = {
+      arrayStride: 24,
+      attributes: [
+          { format: "float32x3", offset: 0,  shaderLocation: 0 }, 
+          { format: "float32x3", offset: 12, shaderLocation: 1 }
+      ],
+  };
+
+  //// const depthTexture = device.createTexture({
+  ////   size: [width, height, 1],
+  ////   usage:  GPUTextureUsage.RENDER_ATTACHMENT |
+  ////           GPUTextureUsage.TEXTURE_BINDING,
+  ////   format: "depth32float"
+  //// });
+
+  //// const depthView = depthTexture.createView();
+
+  // Create the shader module
+  const shaderModule = device.createShaderModule({
+      label: "Example shader module",
+      code: shaderCode
+  });
+
+  let uniformData = mat4.identity();
+
+    // Create uniform buffer
+  const uniformBuffer = device.createBuffer({
+      label: "Uniform Buffer 0",
+      size: uniformData.byteLength,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+  });
+  
+  const gui = new dat.GUI();
+
+  const projection = {
+      type: "Orthographic",
+      switchCamera: function () {
+          if (this.type == "Perspective") {
+              this.type = "Orthographic";
+              gui.remove(view);
+              if (perspective_method != undefined)
+                gui.remove(perspective_method);
+              if (perspective_effect != undefined)
+                gui.remove(perspective_effect);
+              gui.remove(model_render);
+              controls.view = 'axonometry';
+              view = gui.add(controls, 'view', ['left', 'right', 'top', 'bottom', 'front', 'back', 'isometry', 'axonometry']);
+              zoom_effect = gui.add(controls, 'zoom_effect', ['in', 'out']);
+              model_render = gui.add(controls, 'render', ['wireframe', 'polygons']);
+          } else {
+              this.type = "Perspective";
+              gui.remove(view);
+              gui.remove(zoom_effect);
+              gui.remove(model_render);
+              controls.view = '3-point';
+              view = gui.add(controls, 'view', ['1-point', '2-point', '3-point']);
+              perspective_method = gui.add(controls, 'perspective_method', ['perspective', 'frustum']);
+              perspective_effect = gui.add(controls, 'perspective_effect', ['more', 'less']);
+              model_render = gui.add(controls, 'render', ['wireframe', 'polygons']);
+          }
+      }
+  };
+
+  gui.add(projection, 'switchCamera');
+  gui.add(projection, 'type').listen();
+  let view = gui.add(controls, 'view', ['left', 'right', 'top', 'bottom', 'front', 'back', 'isometry', 'axonometry']);
+  let zoom_effect = gui.add(controls, 'zoom_effect', ['in', 'out']);
+  let model_render = gui.add(controls, 'render', ['wireframe', 'polygons']);
+  let perspective_method;
+  let perspective_effect;
+  gui.add(controls, 'instances', 1, 10, 1);
+
+  let eye = vec3.create();
+
+  function render() {
+
+    switch (controls.view) {
+        case 'left':
+            // vec3.set(x, y, z, eye);
+        break;
+        case 'right':
+            // vec3.set(x, y, z, eye);
+        break;
+        case 'top':
+            // vec3.set(x, y, z, eye);
+        break;
+        case 'bottom':
+            // vec3.set(x, y, z, eye);
+        break;
+        case 'front':
+            // vec3.set(x, y, z, eye);
+        break;
+        case 'back':
+            // vec3.set(x, y, z, eye);
+        break;
+        case 'isometry':
+            // vec3.set(x, y, z, eye);
+        break;
+        case 'axonometry':
+            // vec3.set(x, y, z, eye);
+            switch (controls.zoom_effect) {
+              case 'in':
+                // ortho
+                break;
+              case 'out':
+                // ortho
+                break;
             }
-        }
-    };
-
-    guiLineParameters.add(lineParameters, 'switchMaterial');
-    guiLineParameters.add(lineParameters, 'type').listen();
-	
-	const controlsPlane = {
-        visible: false,
-        wireframe: false,
-		width: 20,
-		height: 20,
-		widthSegments: 4,
-		heightSegments: 4
-	};
-	const controlsCircle = {
-        visible: false,
-        wireframe: false,
-		radius: 20,
-		segments: 50,
-		thetaStart: Math.PI / 4,
-		thetaLength: 3 * Math.PI / 2
-
-	};
-	const controlsRing = {
-        visible: false,
-        wireframe: false,
-		innerRadius: 5,
-		outerRadius: 20,
-		thetaSegments: 10,
-		phiSegments: 1,
-		thetaStart: Math.PI / 4,
-		thetaLength: Math.PI / 2
-
-	};
-	const controlsShape = {
-        visible: false,
-        wireframe: false,
-		segments: 12
-	};	
-
-    // create a geometry
-	const geometryPlane = new THREE.PlaneGeometry(controlsPlane.width, controlsPlane.height, controlsPlane.widthSegments, controlsPlane.heightSegments);
-	const geometryCircle = new THREE.CircleGeometry(controlsCircle.radius, controlsCircle.segments, controlsCircle.thetaStart, controlsCircle.thetaLength);
-	const geometryRing = new THREE.RingGeometry(controlsRing.innerRadius, controlsRing.outerRadius, controlsRing.thetaSegments, controlsRing.phiSegments, controlsRing.thetaStart, controlsRing.thetaLength);
-	const geometryShape = new THREE.ShapeGeometry(drawShape(), controlsShape.segments);
-	
-	const materialPlane = new THREE.MeshBasicMaterial( {color: controls.basicColor, wireframe: controlsPlane.wireframe, visible: controlsPlane.visible});
-	const materialCircle = new THREE.MeshBasicMaterial( {color: controls.basicColor, wireframe: controlsCircle.wireframe, visible: controlsCircle.visible});
-	const materialRing = new THREE.MeshBasicMaterial( {color: controls.basicColor, wireframe: controlsRing.wireframe, visible: controlsRing.visible});
-	const materialShape = new THREE.MeshBasicMaterial( {color: controls.basicColor, wireframe: controlsShape.wireframe, visible: controlsShape.visible});
-	
-	guiColor.onChange(function (e) {
-		meshLine.material.color = new THREE.Color(e);
-		meshPlane.material.color = new THREE.Color(e);
-		meshCircle.material.color = new THREE.Color(e);
-		meshRing.material.color = new THREE.Color(e);
-		meshShape.material.color = new THREE.Color(e);
-	});
-	
-	const guiPlaneParameters = gui.addFolder('plane parameters');
-	const guiCircleParameters = gui.addFolder('circle parameters');
-	const guiRingParameters = gui.addFolder('ring parameters');
-	const guiShapeParameters = gui.addFolder('shape parameters');
-
-	guiPlaneParameters.add(controlsPlane, 'visible').onChange(function (e) {
-		meshPlane.material.visible = e;
-	});
-	guiPlaneParameters.add(controlsPlane, 'wireframe').onChange(function (e) {
-		meshPlane.material.wireframe = e;
-	});
-	guiPlaneParameters.add(controlsPlane, 'width', 1, 40).onChange(function (e) {
-		meshPlane.geometry = new THREE.PlaneGeometry(controlsPlane.width, controlsPlane.height, controlsPlane.widthSegments, controlsPlane.heightSegments);
-	});
-	guiPlaneParameters.add(controlsPlane, 'height', 1, 40).onChange(function (e) {
-		meshPlane.geometry = new THREE.PlaneGeometry(controlsPlane.width, controlsPlane.height, controlsPlane.widthSegments, controlsPlane.heightSegments);
-	});
-	guiPlaneParameters.add(controlsPlane, 'widthSegments', 1, 10, 1).onChange(function (e) {
-		meshPlane.geometry = new THREE.PlaneGeometry(controlsPlane.width, controlsPlane.height, controlsPlane.widthSegments, controlsPlane.heightSegments);
-	});
-	guiPlaneParameters.add(controlsPlane, 'heightSegments', 1, 10, 1).onChange(function (e) {
-		meshPlane.geometry = new THREE.PlaneGeometry(controlsPlane.width, controlsPlane.height, controlsPlane.widthSegments, controlsPlane.heightSegments);
-	});
-	guiCircleParameters.add(controlsCircle, 'visible').onChange(function (e) {
-		meshCircle.material.visible = e;
-	});
-	guiCircleParameters.add(controlsCircle, 'wireframe').onChange(function (e) {
-		meshCircle.material.wireframe = e;
-	});
-	guiCircleParameters.add(controlsCircle, 'radius', 1, 40).onChange(function (e) {
-		meshCircle.geometry = new THREE.CircleGeometry(controlsCircle.radius, controlsCircle.segments, controlsCircle.thetaStart, controlsCircle.thetaLength);
-	});
-	guiCircleParameters.add(controlsCircle, 'segments', 1, 100, 1).onChange(function (e) {
-		meshCircle.geometry = new THREE.CircleGeometry(controlsCircle.radius, controlsCircle.segments, controlsCircle.thetaStart, controlsCircle.thetaLength);
-	});
-	guiCircleParameters.add(controlsCircle, 'thetaStart', 0, Math.PI * 2).onChange(function (e) {
-		meshCircle.geometry = new THREE.CircleGeometry(controlsCircle.radius, controlsCircle.segments, controlsCircle.thetaStart, controlsCircle.thetaLength);
-	});
-	guiCircleParameters.add(controlsCircle, 'thetaLength', 0, Math.PI * 2).onChange(function (e) {
-		meshCircle.geometry = new THREE.CircleGeometry(controlsCircle.radius, controlsCircle.segments, controlsCircle.thetaStart, controlsCircle.thetaLength);
-	});
-	guiRingParameters.add(controlsRing, 'visible').onChange(function (e) {
-		meshRing.material.visible = e;
-	});
-	guiRingParameters.add(controlsRing, 'wireframe').onChange(function (e) {
-		meshRing.material.wireframe = e;
-	});
-	guiRingParameters.add(controlsRing, 'innerRadius', 1, 40).onChange(function (e) {
-		meshRing.geometry = new THREE.RingGeometry(controlsRing.innerRadius, controlsRing.outerRadius, controlsRing.thetaSegments, controlsRing.phiSegments, controlsRing.thetaStart, controlsRing.thetaLength);
-	});
-	guiRingParameters.add(controlsRing, 'outerRadius', 1, 40).onChange(function (e) {
-		meshRing.geometry = new THREE.RingGeometry(controlsRing.innerRadius, controlsRing.outerRadius, controlsRing.thetaSegments, controlsRing.phiSegments, controlsRing.thetaStart, controlsRing.thetaLength);
-	});
-	guiRingParameters.add(controlsRing, 'thetaSegments', 1, 100, 1).onChange(function (e) {
-		meshRing.geometry = new THREE.RingGeometry(controlsRing.innerRadius, controlsRing.outerRadius, controlsRing.thetaSegments, controlsRing.phiSegments, controlsRing.thetaStart, controlsRing.thetaLength);
-	});
-	guiRingParameters.add(controlsRing, 'phiSegments', 1, 100, 1).onChange(function (e) {
-		meshRing.geometry = new THREE.RingGeometry(controlsRing.innerRadius, controlsRing.outerRadius, controlsRing.thetaSegments, controlsRing.phiSegments, controlsRing.thetaStart, controlsRing.thetaLength);
-	});
-	guiRingParameters.add(controlsRing, 'thetaStart', 0, Math.PI * 2).onChange(function (e) {
-		meshRing.geometry = new THREE.RingGeometry(controlsRing.innerRadius, controlsRing.outerRadius, controlsRing.thetaSegments, controlsRing.phiSegments, controlsRing.thetaStart, controlsRing.thetaLength);
-	});
-	guiRingParameters.add(controlsRing, 'thetaLength', 0, Math.PI * 2).onChange(function (e) {
-		meshRing.geometry = new THREE.RingGeometry(controlsRing.innerRadius, controlsRing.outerRadius, controlsRing.thetaSegments, controlsRing.phiSegments, controlsRing.thetaStart, controlsRing.thetaLength);
-	});
-	guiShapeParameters.add(controlsShape, 'visible').onChange(function (e) {
-		meshShape.material.visible = e;
-	});
-	guiShapeParameters.add(controlsShape, 'wireframe').onChange(function (e) {
-		meshShape.material.wireframe = e;
-	});
-	guiShapeParameters.add(controlsShape, 'segments', 1, 20, 1).onChange(function (e) {
-		meshShape.geometry = new THREE.ShapeGeometry(drawShape(), controlsShape.segments);
-	});
-
-    const meshPlane = new THREE.Mesh(geometryPlane, materialPlane);
-	//meshPlane.position.x = 10;
-    const meshCircle = new THREE.Mesh(geometryCircle, materialCircle);
-    const meshRing = new THREE.Mesh(geometryRing, materialRing);
-    const meshShape = new THREE.Mesh(geometryShape, materialShape);
-
-    scene.add(meshPlane);
-    scene.add(meshCircle);
-    scene.add(meshRing);
-    scene.add(meshShape);
-
-    // add the output of the renderer to the html element
-    document.body.appendChild(renderer.domElement);
-
-    function render() {
-		// position the camera
-		camera.position.x = 0;
-		camera.position.y = 0;
-		camera.position.z = 15;
- 
-        camera.lookAt(scene.position);
-
-        // render using requestAnimationFrame
-        requestAnimationFrame(render);
-        renderer.render(scene, camera);
+        break;
+        case '1-point':
+            switch (controls.perspective_method) {
+              case 'perspective':
+                switch (controls.perspective_effect) {
+                case 'more':
+                  // vec3.set(x, y, z, eye);
+                  // perspective
+                  break;
+                case 'less':
+                  // vec3.set(x, y, z, eye);
+                  // perspective
+                  break;
+                }
+                break;
+              case 'frustum':
+                
+                switch (controls.perspective_effect) {
+                  case 'more':
+                    // frustum
+                    break;
+                  case 'less':
+                    // frustum
+                    break;
+                  }
+                break;
+            }
+        break;
+        case '2-point':
+            // vec3.set(x, y, z, eye)
+            switch (controls.perspective_method) {
+              case 'perspective':
+                // perspective
+                break;
+              case 'frustum':
+                // frustum
+                break;
+            }
+        break;
+        case '3-point':
+            // vec3.set(x, y, z, eye)
+            switch (controls.perspective_method) {
+              case 'perspective':
+                // perspective
+                break;
+              case 'frustum':
+                // frustum
+                break;
+            }
+        break;
     }
 
-    // call the render function
-    render();
-}
 
-function drawShape() {
+    // point the camera to the center of the scene
+    // mat4.lookAt(eye, center,	up, viewMatrix);
 
-  // create a basic shape
-  var shape = new THREE.Shape();
+    // Update the uniform buffer
+    //uniformData = vpMatrix; 
+    device.queue.writeBuffer(uniformBuffer, 0, uniformData);
 
-  // startpoint
-  shape.moveTo(10, 10);
+    let primitive;
 
-  // straight line upwards
-  shape.lineTo(10, 40);
+    switch (controls.render) {
+    case 'wireframe':
+        primitive = {
+          topology: 'line-list',
+        };
 
-  // the top of the figure, curve to the right
-  shape.bezierCurveTo(15, 25, 25, 25, 30, 40);
+      break;
+    case 'polygons':
+        primitive = {
+          topology: 'triangle-list',
+        };
+      break;
+    }
 
-  // spline back down
-  shape.splineThru(
-    [new THREE.Vector2(32, 30),
-      new THREE.Vector2(28, 20),
-      new THREE.Vector2(30, 10),
-    ]);
+    // Define the rendering procedure
+    const renderPipeline = device.createRenderPipeline({
+        layout: "auto",
+        vertex: {
+            module: shaderModule,
+            entryPoint: "vertexMain",
+            buffers: [bufferLayout]
+        },
+        fragment: {
+            module: shaderModule,
+            entryPoint: "fragmentMain",
+            targets: [{
+                format: canvasFormat
+            }]
+        },
+        //// depthStencil: {
+        ////   format: "depth32float",
+        ////   depthCompare: "less",
+        ////   depthWriteEnabled: true,
+        //// },
+        primitive, 
+    });
 
-  // curve at the bottom
-  shape.quadraticCurveTo(20, 15, 10, 10);
+    // Access the bind group layout
+    const bindGroupLayout = renderPipeline.getBindGroupLayout(0);
 
-  // add 'eye' hole one
-  var hole1 = new THREE.Path();
-  hole1.absellipse(16, 24, 2, 3, 0, Math.PI * 2, true);
-  shape.holes.push(hole1);
+    // Create the bind group
+    let bindGroup = device.createBindGroup({
+        layout: bindGroupLayout,
+        entries: [{
+            binding: 0,
+            resource: { buffer: uniformBuffer }
+        }]
+    });
 
-  // add 'eye hole 2'
-  var hole2 = new THREE.Path();
-  hole2.absellipse(23, 24, 2, 3, 0, Math.PI * 2, true);
-  shape.holes.push(hole2);
+    // Create the command encoder and the render pass encoder
+    const encoder = device.createCommandEncoder();
+    if (!encoder)
+      throw new Error("Failed to create a GPUCommandEncoder");
 
-  // add 'mouth'
-  var hole3 = new THREE.Path();
-  hole3.absarc(20, 16, 2, 0, Math.PI, true);
-  shape.holes.push(hole3);
+    // Create the render pass encoder
+    const renderPass = encoder.beginRenderPass({
+        colorAttachments: [{
+            view: context.getCurrentTexture().createView(),
+            loadOp: "clear",
+            clearValue: { r: 0.9, g: 0.9, b: 0.9, a: 1.0 },
+            storeOp: "store"
+        }],
+        //// depthStencilAttachment: {
+        ////     view: depthView,
+        ////     depthClearValue: 1.0,
+        ////     depthLoadOp: "clear",
+        ////     depthStoreOp: "store"
+        ////   }
+    });
 
-  // return the shape
-  return shape;
+    // Set the vertex buffer and pipeline
+    // renderPass.setVertexBuffer(0, vertexBuffer);
+    renderPass.setPipeline(renderPipeline);
+
+    // Associate bind group with render pass encoder
+    renderPass.setBindGroup(0, bindGroup);
+
+    // Draw vertices
+    switch (controls.render) {
+    case 'wireframe':
+      //renderPass.draw(24);
+      break;
+    case 'polygons':
+      //renderPass.draw(36);
+      break;
+    }
+    renderPass.end();
+
+    // Submit the render commands to the GPU
+    device.queue.submit([encoder.finish()]);
+
+    // render using requestAnimationFrame
+    requestAnimationFrame(render);
+  }
+
+  // call the render function
+  render();
+
 }
 
 window.onload = main;
