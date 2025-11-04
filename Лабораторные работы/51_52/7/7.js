@@ -3,8 +3,8 @@
 // Imports.
 import {getShader} from './libs/prepShader.js';
 import {initShaders} from './libs/cuon-utils.js';
-import * as  dat from './libs/dat.gui.module.js';
-import {vec3, mat4} from './libs/dist/esm/index.js';
+import * as  dat from 'https://cdn.jsdelivr.net/npm/dat.gui@0.7.9/build/dat.gui.module.js';
+import {vec3, mat4} from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.4/+esm';
 
 async function main() {
   // Retrieve <canvas> element
@@ -43,7 +43,7 @@ async function main() {
   }
 
   // Specify the color for clearing <canvas>
-  gl.clearColor(0, 0, 0, 1);
+  gl.clearColor(1, 1, 1, 1);
 
   const gui = new dat.GUI();
 
@@ -90,28 +90,28 @@ async function main() {
 
     switch (controls.view) {
         case 'left':
-            // vec3.set(eye, x, y, z)
+            // vec3.set(eye, x, y, z);
         break;
         case 'right':
-            // vec3.set(eye, x, y, z)
+            // vec3.set(eye, x, y, z);
         break;
         case 'top':
-            // vec3.set(eye, x, y, z)
+            // vec3.set(eye, x, y, z);
         break;
         case 'bottom':
-            // vec3.set(eye, x, y, z)
+            // vec3.set(eye, x, y, z);
         break;
         case 'front':
-            // vec3.set(eye, x, y, z)
+            // vec3.set(eye, x, y, z);
         break;
         case 'back':
-            // vec3.set(eye, x, y, z)
+            // vec3.set(eye, x, y, z);
         break;
         case 'isometry':
-            // vec3.set(eye, x, y, z)
+            // vec3.set(eye, x, y, z);
         break;
         case 'axonometry':
-            // vec3.set(eye, x, y, z)
+            // vec3.set(eye, x, y, z);
             switch (controls.zoom_effect) {
               case 'in':
                 // ortho
@@ -126,11 +126,11 @@ async function main() {
               case 'perspective':
                 switch (controls.perspective_effect) {
                 case 'more':
-                  // vec3.set(eye, x, y, z)
+                  // vec3.set(eye, x, y, z);
                   // perspective
                   break;
                 case 'less':
-                  // vec3.set(eye, x, y, z)
+                  // vec3.set(eye, x, y, z);
                   // perspective
                   break;
                 }
