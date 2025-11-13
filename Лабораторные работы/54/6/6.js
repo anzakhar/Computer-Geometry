@@ -1,220 +1,228 @@
-"use strict";
+// 6.js
 
 // Imports.
-import * as THREE from './libs/three.module.js'
-import * as  dat from './libs/dat.gui.module.js';
+import {getShader} from './libs/prepShader.js';
+import { mat4, vec4 } from 'https://wgpu-matrix.org/dist/2.x/wgpu-matrix.module.js'; 
 
-function main() {
+// Create top-level asynchronous function
+async function main() {
 
-    // create a scene, that will hold all our elements such as objects, cameras and lights.
-    const scene = new THREE.Scene();
+    // Read shaders.
+  const shaderCode = await getShader("shaders.wgsl");
 
-    // create a camera, which defines where we're looking at.
-    let camera = new THREE.OrthographicCamera( -window.innerWidth / 130, window.innerWidth / 130, window.innerHeight / 130,
-        -window.innerHeight / 130, -200, 500 );
-
-    // create a render, sets the background color and the size
-    const renderer = new THREE.WebGLRenderer();
-    renderer.setClearColor(0x000000, 1.0);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-
-    // show axes in the screen
-    const axes = new THREE.AxesHelper(20);
-    scene.add(axes);
-
-    const controls = {
-        view: 'axonometry',
-        zoom_effect: 'in',
-        perspective_effect: 'more',
-        visibleRed: true,
-        visibleGreen: true,
-        visibleBlue: true,
-        visibleCyan: true,
-        visibleMagenta: true,
-        visibleYellow: true,
-        wireframe: false
-    };
-
-    const gui = new dat.GUI();
-	gui.add(controls, 'wireframe');
-
-    const guiVisible = gui.addFolder('visible');
-    guiVisible.add(controls, 'visibleRed');
-    guiVisible.add(controls, 'visibleGreen');
-    guiVisible.add(controls, 'visibleBlue');
-    guiVisible.add(controls, 'visibleCyan');
-    guiVisible.add(controls, 'visibleMagenta');
-    guiVisible.add(controls, 'visibleYellow');
-	
-    const guiCamera = gui.addFolder('camera');
-
-    const projection = {
-        type: "Orthographic",
-        switchCamera: function () {
-            if (camera instanceof THREE.PerspectiveCamera) {
-                camera = new THREE.OrthographicCamera( window.innerWidth / -130, window.innerWidth / 130, window.innerHeight / 130,
-                    window.innerHeight / - 130, -200, 500 );
-                
-                this.type = "Orthographic";
-                guiCamera.remove(view);
-                if (perspective_effect != undefined)
-                guiCamera.remove(perspective_effect);
-                controls.view = 'axonometry';
-                view = guiCamera.add(controls, 'view', ['left', 'right', 'top', 'bottom', 'front', 'back', 'isometry', 'axonometry']);
-                zoom_effect = guiCamera.add(controls, 'zoom_effect', ['in', 'out']);
-            } else {
-                camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-                this.type = "Perspective";
-                guiCamera.remove(view);
-                guiCamera.remove(zoom_effect);
-                controls.view = '3-point';
-                view = guiCamera.add(controls, 'view', ['1-point', '2-point', '3-point']);
-                perspective_effect = guiCamera.add(controls, 'perspective_effect', ['more', 'less']);
-            }
-        }
-    };
-
-    guiCamera.add(projection, 'switchCamera');
-    guiCamera.add(projection, 'type').listen();
-    let view = guiCamera.add(controls, 'view', ['left', 'right', 'top', 'bottom', 'front', 'back', 'isometry', 'axonometry']);
-    let zoom_effect = guiCamera.add(controls, 'zoom_effect', ['in', 'out']);
-    let perspective_effect;
-
-    // create a cube and add to scene
-
-    const matArray = [];
-    matArray.push(new THREE.MeshBasicMaterial( {color: 0x00ffff, side:THREE.DoubleSide, wireframe: controls.wireframe, }));
-    matArray.push(new THREE.MeshBasicMaterial( {color: 0xff0000, side:THREE.DoubleSide, wireframe: controls.wireframe, }));
-    matArray.push(new THREE.MeshBasicMaterial( {color: 0x0000ff, side:THREE.DoubleSide, wireframe: controls.wireframe, }));
-    matArray.push(new THREE.MeshBasicMaterial( {color: 0xff00ff, side:THREE.DoubleSide, wireframe: controls.wireframe, }));
-    matArray.push(new THREE.MeshBasicMaterial( {color: 0x00ff00, side:THREE.DoubleSide, wireframe: controls.wireframe, }));
-    matArray.push(new THREE.MeshBasicMaterial( {color: 0xffff00, side:THREE.DoubleSide, wireframe: controls.wireframe, }));
-    const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
-    const cube = new THREE.Mesh(cubeGeometry, matArray);
-
-    scene.add(cube);
-
-    // add the output of the renderer to the html element
-    document.body.appendChild(renderer.domElement);
-
-    function render() {
-
-        switch (controls.view) {
-            case 'left':
-                // position the camera
-                camera.position.x = 5;
-                camera.position.y = 13;
-                camera.position.z = 15;
-            break;
-            case 'right':
-                // position the camera
-                camera.position.x = 5;
-                camera.position.y = 13;
-                camera.position.z = 15;
-            break;
-            case 'top':
-                // position the camera
-                camera.position.x = 5;
-                camera.position.y = 13;
-                camera.position.z = 15;
-            break;
-            case 'bottom':
-                // position the camera
-                camera.position.x = 5;
-                camera.position.y = 13;
-                camera.position.z = 15;
-            break;
-            case 'front':
-                // position the camera
-                camera.position.x = 5;
-                camera.position.y = 13;
-                camera.position.z = 15;
-            break;
-            case 'back':
-                // position the camera
-                camera.position.x = 5;
-                camera.position.y = 13;
-                camera.position.z = 15;
-            break;
-            case 'isometry':
-                // position the camera
-                camera.position.x = 5;
-                camera.position.y = 13;
-                camera.position.z = 15;
-            break;
-            case 'axonometry':
-                switch (controls.zoom_effect) {
-                    case 'in':
-                        // camera = new THREE.OrthographicCamera( window.innerWidth / -130, window.innerWidth / 130, window.innerHeight / 130,
-                        //                                         window.innerHeight / - 130, -200, 500 );
-                      break;
-                    case 'out':
-                        // camera = new THREE.OrthographicCamera( window.innerWidth / -130, window.innerWidth / 130, window.innerHeight / 130,
-                        //                                         window.innerHeight / - 130, -200, 500 );
-                      break;
-                  }
-                                  // position the camera
-                camera.position.x = 5;
-                camera.position.y = 13;
-                camera.position.z = 15;
-            break;
-            case '1-point':
-
-                switch (controls.perspective_effect) {
-                    case 'more':
-                      // camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-                      // position the camera
-                      // camera.position.x = 5;
-                      // camera.position.y = 13;
-                      // camera.position.z = 15;
-                      break;
-                    case 'less':
-                      // camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-                      // position the camera
-                      // camera.position.x = 5;
-                      // camera.position.y = 13;
-                      // camera.position.z = 15;
-                      break;
-                    }
-            break;
-            case '2-point':
-                // position the camera
-                camera.position.x = 5;
-                camera.position.y = 13;
-                camera.position.z = 15;
-            break;
-            case '3-point':
-                // position the camera
-                camera.position.x = 5;
-                camera.position.y = 13;
-                camera.position.z = 15;                
-            break;
-        }
- 
-        camera.lookAt(scene.position);
-
-        matArray[0].visible = controls.visibleCyan;
-        matArray[1].visible = controls.visibleRed;
-        matArray[2].visible = controls.visibleBlue;
-        matArray[3].visible = controls.visibleMagenta;
-        matArray[4].visible = controls.visibleGreen;
-        matArray[5].visible = controls.visibleYellow;
-		
-		matArray[0].wireframe = controls.wireframe;
-        matArray[1].wireframe = controls.wireframe;
-        matArray[2].wireframe = controls.wireframe;
-        matArray[3].wireframe = controls.wireframe;
-        matArray[4].wireframe = controls.wireframe;
-        matArray[5].wireframe = controls.wireframe;
-
-        // render using requestAnimationFrame
-        requestAnimationFrame(render);
-        renderer.render(scene, camera);
+    // Check if WebGPU is supported
+    if (!navigator.gpu) {
+        throw new Error("WebGPU not supported");
     }
 
-    // call the render function
-    render();
+    // Access the GPUAdapter
+    const adapter = await navigator.gpu.requestAdapter();
+    if (!adapter) {
+        throw new Error("No GPUAdapter found");
+    }
+
+    // Access the client"s GPU
+    const device = await adapter.requestDevice();
+    if (!device) {
+        throw new Error("Failed to create a GPUDevice");
+    }
+
+    // Access the canvas
+    const canvas = document.getElementById("canvas_example");
+    if (!canvas) {
+        throw new Error("Could not access canvas in page");
+    }
+
+    // Obtain a WebGPU context for the canvas
+    const context = canvas.getContext("webgpu");
+    if (!context) {
+        throw new Error("Could not obtain WebGPU context for canvas");
+    }
+
+    // Configure the context with the device and format
+    const canvasFormat = navigator.gpu.getPreferredCanvasFormat();
+    context.configure({
+        device: device,
+        format: canvasFormat,
+    });
+
+    // Create the command encoder
+    const encoder = device.createCommandEncoder();
+    if (!encoder) {
+        throw new Error("Failed to create a GPUCommandEncoder");
+    }
+
+    // Create the render pass encoder
+    const renderPass = encoder.beginRenderPass({
+        colorAttachments: [{
+            view: context.getCurrentTexture().createView(),
+            loadOp: "clear",
+            clearValue: { r: 0.4, g: 0.4, b: 0.4, a: 1.0 },
+            storeOp: "store"
+        }]
+    });
+
+    // Define vertex data (coordinates and colors)
+    const RAD = 1.5;
+    const NUM_LATITUDE = 16;
+    const NUM_LONGITUDE = 32;
+    const NUM_VERTICES = NUM_LATITUDE * NUM_LONGITUDE + 2;
+    const NUM_INDICES = NUM_LONGITUDE * (2 * NUM_LATITUDE + 3);
+    const THETA_CONVERSION = (2.0 * Math.PI)/NUM_LONGITUDE;
+    const PHI_CONVERSION = Math.PI/(NUM_LATITUDE + 1);
+
+    // Set coordinates of top and bottom points
+    const vData = new Float32Array(3 * NUM_VERTICES);
+    vData[0] = 0.0; vData[1] = 0.0; vData[2] = RAD;
+    vData[3] = 0.0; vData[4] = 0.0; vData[5] = -1.0 * RAD;
+
+    // Create data arrays
+    const iData = new Uint16Array(NUM_INDICES);
+
+    // Iterate through slices
+    let ptIndex = 0; let vertIndex = 2;
+    let theta = 0.0; let phi = 0.0;
+    let rad_cos_theta = 0.0; let rad_sin_theta = 0.0;
+
+    for (let lon = 0; lon < NUM_LONGITUDE; lon++) {
+
+        theta = lon * THETA_CONVERSION;
+        rad_sin_theta = RAD * Math.sin(theta);
+        rad_cos_theta = RAD * Math.cos(theta);
+
+        // Add top vertex
+        iData[ptIndex++] = 0;
+
+        for (let lat = 1; lat <= NUM_LATITUDE; lat++) {
+
+            // Set index values
+            iData[ptIndex++] = vertIndex;
+            iData[ptIndex++] = (vertIndex + NUM_LATITUDE) % (NUM_VERTICES - 2);
+
+            // Compute phi
+            phi = Math.PI/2.0 - lat * PHI_CONVERSION;
+
+            // Set vertex values
+            vData[3 * vertIndex] = rad_cos_theta * Math.cos(phi);
+            vData[3 * vertIndex + 1] = rad_sin_theta * Math.cos(phi);
+            vData[3 * vertIndex++ + 2] = RAD * Math.sin(phi);
+        }
+
+        // Add bottom vertex
+        iData[ptIndex++] = 1;
+        
+        // Add primitive restart
+        if(lon != NUM_LONGITUDE - 1) {
+            iData[ptIndex++] = 0xffff;
+        }
+    }
+
+    // Create vertex buffer
+    const vertexBuffer = device.createBuffer({
+        label: "Vertex Buffer 0",
+        size: vData.byteLength,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST
+    });
+    device.queue.writeBuffer(vertexBuffer, 0, vData);
+    renderPass.setVertexBuffer(0, vertexBuffer);
+
+    // Define layout of buffer data
+    const bufferLayout = {
+        arrayStride: 12,
+        attributes: [
+        { format: "float32x3", offset: 0, shaderLocation: 0 }
+        ],
+    };
+
+    // Create index buffer
+    const indexBuffer = device.createBuffer({
+        label: "Index Buffer 0",
+        size: iData.byteLength,
+        usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST
+    });
+    device.queue.writeBuffer(indexBuffer, 0, iData);
+    renderPass.setIndexBuffer(indexBuffer, "uint16");
+
+    // Define transformation
+    const viewMat = mat4.lookAt([0.0, 0.0, 10.0], [0.0, 0.0, 0.0], [0.0, 1.0, 0.0]);
+    const projMat = mat4.perspective(30.0 * Math.PI / 180.0, 1.0, 5.0, 25.0);
+    const vpMat = mat4.mul(projMat, viewMat);
+
+    // Set positions
+    const oldCenter = new Float32Array([0.0, 0.0, 0.0, 1.0]);
+    const centerPos = vec4.transformMat4(oldCenter, viewMat);
+    const viewerPos = new Float32Array([0.0, 0.0, 0.0, 0.0]);
+    const lightPos = new Float32Array([5.0, 15.0, 9.0, 0.0]);
+
+    // Set light components
+    const ambient = new Float32Array([0.2, 0.2, 0.2, 0.0]);
+    const diffuse = new Float32Array([1.0, 1.0, 1.0, 0.0]);
+    const specular = new Float32Array([1.0, 1.0, 1.0]);
+    const shininess = new Float32Array([1.5]);
+
+    // Combine data into uniform buffer
+    const uniformData = Float32Array.of(...viewMat, ...vpMat, ...centerPos, ...viewerPos, ...lightPos, ...ambient, ...diffuse, ...specular, ...shininess);
+
+    // Create uniform buffer
+    const uniformBuffer = device.createBuffer({
+        label: "Uniform Buffer 0",
+        size: uniformData.byteLength,
+        usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST
+    });
+    device.queue.writeBuffer(uniformBuffer, 0, uniformData); 
+
+    // Create the shader module
+    const shaderModule = device.createShaderModule({
+        label: "Shader Module 0",
+        code: shaderCode
+    });
+
+    // Define the rendering procedure
+    const renderPipeline = device.createRenderPipeline({
+        layout: "auto",
+        vertex: {
+        module: shaderModule,
+        entryPoint: "vertexMain",
+        buffers: [bufferLayout]
+        },
+        fragment: {
+        module: shaderModule,
+        entryPoint: "fragmentMain",
+        targets: [{
+            format: canvasFormat
+        }]
+        },
+        primitive: {
+            topology: "triangle-strip",
+            //topology: "line-strip",
+            stripIndexFormat: "uint16",
+            frontFace: "ccw",
+            cullMode: "back"
+        }
+    });
+    renderPass.setPipeline(renderPipeline);
+
+    // Access the bind group layout
+    const bindGroupLayout = renderPipeline.getBindGroupLayout(0);
+
+    // Create the bind group
+    let bindGroup = device.createBindGroup({
+        layout: bindGroupLayout,
+        entries: [{
+            binding: 0,
+            resource: { buffer: uniformBuffer }
+        }]
+    });
+
+    // Associate bind group with render pass encoder
+    renderPass.setBindGroup(0, bindGroup);
+
+    // Draw vertices and complete rendering
+    renderPass.drawIndexed(NUM_INDICES);
+    renderPass.end();
+
+    // Submit the render commands to the GPU
+    device.queue.submit([encoder.finish()]);
 }
 
 window.onload = main;
