@@ -32,7 +32,8 @@ async function main() {
     perspective_method: 'perspective',
     zoom_effect: 'in',
     perspective_effect: 'more',
-    render: 'wireframe'
+    render: 'wireframe',
+    instances: 1
   };
 
   // Write the positions of vertices to a vertex shader
@@ -83,6 +84,7 @@ async function main() {
   let model_render = gui.add(controls, 'render', ['wireframe', 'polygons']);
   let perspective_method;
   let perspective_effect;
+  gui.add(controls, 'instances', 1, 10, 1);
 
   let eye = vec3.create();
 
