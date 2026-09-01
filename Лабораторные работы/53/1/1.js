@@ -83,12 +83,12 @@ function main() {
     //дуга окружности синего цвета, построенная по трем точкам
     // ctx.strokeStyle = 'blue';
     // // for (let j = 0; j <= 280; j += 40) {
-      // ctx.beginPath();
-      // ctx.moveTo(20, 20);
-       // ctx.arcTo(240, 240, 460, 20, 100);
-      // // ctx.lineTo(460, 20);
-      // ctx.stroke();
-    // }    
+    //   ctx.beginPath();
+    //   ctx.moveTo(20, 20);
+    //    ctx.arcTo(240, 240, 460, 20, 100);
+    //   // ctx.lineTo(460, 20);
+    //   ctx.stroke();
+    // // }    
 
     ////Кривая Безье
     //ctx.beginPath();
