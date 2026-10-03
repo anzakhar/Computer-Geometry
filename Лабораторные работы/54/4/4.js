@@ -2,7 +2,8 @@
 
 // Imports.
 import {getShader} from './libs/prepShader.js';
-import { mat4 } from 'https://wgpu-matrix.org/dist/2.x/wgpu-matrix.module.js'; 
+import { mat4 } from './libs/wgpu-matrix/wgpu-matrix.module.js'; 
+//import { mat4 } from 'https://wgpu-matrix.org/dist/2.x/wgpu-matrix.module.js';
 
 async function main() {
 
